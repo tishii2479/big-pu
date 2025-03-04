@@ -1,0 +1,11 @@
+data
+model
+log
+*.in
+*.out
+.vscode
+*.o
+notebooks
+tmp
+__pycache__
+
