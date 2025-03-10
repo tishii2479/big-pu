@@ -1,3 +1,4 @@
+import itertools
 from typing import Optional, Union
 
 import numpy as np
@@ -119,6 +120,11 @@ def eval_serendipity(
             serendipity += 1
 
     return serendipity / len(rec_list)
+
+
+def eval_prediction_coverage(rec_lists: list[list[int]], item_n: int) -> float:
+    num_recommended_items = len(set(itertools.chain.from_iterable(rec_lists)))
+    return num_recommended_items / item_n
 
 
 class Evaluator:

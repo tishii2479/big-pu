@@ -1,11 +1,11 @@
-YOKOU_METHODS = [
+PREPRINT_METHODS = [
     "accuracy",
     "diversity:topic:category",
     "novelty:ip",
     "serendipity:topic:category",
     "information-gain",
 ]
-ALL_METHODS = YOKOU_METHODS + [
+ALL_METHODS = PREPRINT_METHODS + [
     "diversity:embedding",
     "diversity:topic:category-u",
     "novelty:du:topic:category",
@@ -18,6 +18,7 @@ LANGUANGE_MAP_JP = {
     "diversity": "多様性",
     "novelty": "新規性",
     "serendipity": "意外性",
+    "coverage": "網羅性",
     "information-gain": "提案指標",
     "topic": "トピック",
     "embedding": "埋め込み",
@@ -34,6 +35,29 @@ LANGUANGE_MAP_JP = {
     "test-precision": r"$\mathcal{I}^{test}$に対する正解率",
     "test-recall": r"$\mathcal{I}^{test}$に対する再現率",
     "hit": "正解数",
+}
+LANGUANGE_MAP_EN = {
+    "accuracy": "Recall",
+    "diversity": "Diversity",
+    "novelty": "Novelty",
+    "serendipity": "Serendipity",
+    "coverage": "Coverage",
+    "information-gain": "Proposed",
+    "topic": "Topic",
+    "embedding": "Embedding",
+    "ip": "IP",  # Item Popularity
+    "du": "DU",  # Distance from User
+    "category": "Subcategory",
+    "category-u": "Category",
+    "round": "Round",
+    "method": "Method",
+    "artificial": "Artificial Data",
+    "dunnhumby": "Dunnhumby",
+    "tafeng": "Tafeng",
+    "entropy": r"$H(P(k_u|\mathcal{D}))$",
+    "test-precision": r"Accuracy against $\mathcal{I}^{test}$",
+    "test-recall": r"Recall against $\mathcal{I}^{test}$",
+    "hit": "Hit",
 }
 
 

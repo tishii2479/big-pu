@@ -6,7 +6,7 @@ import pandas as pd
 import tqdm
 
 from lib.criterion import InformationGainCriterion
-from lib.eval import Evaluator
+from lib.eval import Evaluator, eval_prediction_coverage
 from lib.ranker import get_ranker
 from lib.util import Dataset, convert_to_user_history
 from util import generate_psi_from_dataset
@@ -36,11 +36,17 @@ class Args:
         print(f"output to: {self.out_path}")
 
 
-def output_evals(evals: dict[str, list[dict]], out_dir: pathlib.Path) -> None:
+def output_evals(
+    evals: dict[str, list[dict]],
+    overall_evals: dict[str, dict[str, float]],
+    out_dir: pathlib.Path,
+) -> None:
     results = {}
     for method, evals in evals.items():
         d = pd.DataFrame(evals)
-        results[method] = d.mean()
+        results[method] = d.mean().to_dict()
+    for method, overall_evals in overall_evals.items():
+        results[method] |= overall_evals
     df = pd.DataFrame(results)
     df.index.name = "method"
     print(df)
@@ -70,6 +76,8 @@ def main() -> None:
     )
     evals: dict[str, list[dict]] = {method: [] for method in args.methods}
 
+    rec_lists: dict[str, list[list[int]]] = {method: [] for method in args.methods}
+
     for u in tqdm.tqdm(range(min(args.max_eval_user, dataset.user_n))):
         user_history = convert_to_user_history(
             train_p_u=dataset.train_p_u[u],
@@ -94,7 +102,15 @@ def main() -> None:
                     eval_r_u=dataset.eval_r_u[u],
                 )
             )
-    output_evals(evals=evals, out_dir=args.out_path)
+            rec_lists[method].append(rec_list)
+
+    overall_evals: dict[str, dict[str, float]] = {method: {} for method in args.methods}
+    for method in args.methods:
+        overall_evals[method]["coverage"] = eval_prediction_coverage(
+            rec_lists=rec_lists[method], item_n=dataset.item_n
+        )
+
+    output_evals(evals=evals, overall_evals=overall_evals, out_dir=args.out_path)
 
 
 if __name__ == "__main__":

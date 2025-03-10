@@ -63,6 +63,7 @@ class Test:
         num_item = 100
         num_topic = 10
         num_sample_item = 5
+        iter_max = 3
         num_new_psi = 100
         dataset = generate_artificial_dataset(
             num_user=num_user,
@@ -72,7 +73,7 @@ class Test:
         )
         rnd = np.random.RandomState(0)
         psi, weights = generate_psi_embedding(
-            dataset=dataset, rnd=rnd, num_new_psi=num_new_psi
+            dataset=dataset, iter_max=iter_max, rnd=rnd, num_new_psi=num_new_psi
         )
         assert psi.shape == (num_new_psi, num_item)
         assert weights.shape == (num_new_psi,)

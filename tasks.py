@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from lib.const import ALL_METHODS, LANGUANGE_MAP_JP, YOKOU_METHODS, translate
-from lib.util import Dataset
+from lib.const import ALL_METHODS, LANGUANGE_MAP_JP, PREPRINT_METHODS, translate
 
 
 def read_df(
@@ -18,8 +17,6 @@ def read_df(
     lan_map: Optional[dict[str, str]] = None,
 ) -> pd.DataFrame:
     df = pd.read_csv(data_path)
-    # df = df[(10 <= df["round"]) & (df["round"] <= 100)]
-
     if methods is not None:
         df = df[df.method.isin(set(methods))]
     if lan_map is not None:
@@ -36,8 +33,8 @@ def preprocess(c: invoke.context.Context) -> None:
 
 @invoke.task
 def integration_test(c: invoke.context.Context) -> None:
-    simulation(c, root_out_dir="log/test", mode="valid", is_test=True)
-    evaluation(c, root_out_dir="log/test", mode="valid", is_test=True)
+    simulation(c, root_out_dir="log/test", mode="valid", is_debug=True)
+    evaluation(c, root_out_dir="log/test", mode="valid", is_debug=True)
 
 
 @invoke.task
@@ -46,19 +43,13 @@ def unit_test(c: invoke.context.Context) -> None:
 
 
 @invoke.task
-def dataset_info(c: invoke.context.Context) -> None:
-    dataset = Dataset.from_json("data/preprocessed/dunnhumby/data.json", mode="valid")
-    dataset.print_info()
-
-
-@invoke.task
 def simulation(
-    c: invoke.context.Context, root_out_dir: str, mode: str, is_test: bool = False
+    c: invoke.context.Context, root_out_dir: str, mode: str, is_debug: bool = False
 ) -> None:
     methods = " ".join(ALL_METHODS)
-    iter_max = 3 if is_test else 50
-    trial_nums = 3 if is_test else 50
-    total_rounds = 3 if is_test else 200
+    iter_max = 3 if is_debug else 50
+    trial_nums = 3 if is_debug else 50
+    total_rounds = 3 if is_debug else 200
     root_dir = pathlib.Path(root_out_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
     for data_path, out_dir in [
@@ -89,11 +80,11 @@ def evaluation(
     mode: str,
     psi_strategy: str,
     iter_max: int,
-    is_test: bool = False,
+    is_debug: bool = False,
 ) -> None:
     methods = " ".join(ALL_METHODS)
-    iter_max = 3 if is_test else iter_max
-    max_eval_user = 3 if is_test else 100
+    iter_max = 3 if is_debug else iter_max
+    max_eval_user = 3 if is_debug else 100
     eps = 0.5
     root_dir = pathlib.Path(root_out_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
@@ -137,7 +128,7 @@ def create_preprint_figure(c: invoke.context.Context, root_out_dir: str) -> None
                 style=translate("method", lan_map=lan_map),
                 data=read_df(
                     root_out_dir / data_name / "log.csv",
-                    methods=YOKOU_METHODS,
+                    methods=PREPRINT_METHODS,
                     lan_map=lan_map,
                 ),
                 ax=axes[i, j],
