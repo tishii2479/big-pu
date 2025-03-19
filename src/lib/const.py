@@ -42,7 +42,7 @@ LANGUANGE_MAP_EN = {
     "novelty": "Novelty",
     "serendipity": "Serendipity",
     "coverage": "Coverage",
-    "information-gain": "Proposed",
+    "information-gain": "BIG-PU",
     "topic": "Topic",
     "embedding": "Embedding",
     "ip": "IP",  # Item Popularity
@@ -72,15 +72,4 @@ def translate(s: str, lan_map: dict[str, str]) -> str:
             )
             + "）"
         )
-    ret = (
-        ret.replace("トピック，", "")
-        .replace("（", "")
-        .replace("，", "")
-        .replace("）", "")
-        .replace("DU", "")
-        .replace("IP", r"$I$")
-        .replace("小カテゴリ", r"$c$")
-        .replace("大カテゴリ", r"$C$")
-        .replace("埋め込み", r"$e$")
-    )
     return ret

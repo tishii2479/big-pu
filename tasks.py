@@ -28,13 +28,16 @@ def read_df(
 
 @invoke.task
 def preprocess(c: invoke.context.Context) -> None:
-    subprocess.run("python src/preprocess.py", shell=True)
+    subprocess.run("uv run src/preprocess.py", shell=True)
 
 
 @invoke.task
 def integration_test(c: invoke.context.Context) -> None:
-    simulation(c, root_out_dir="log/test", mode="valid", is_debug=True)
-    evaluation(c, root_out_dir="log/test", mode="valid", is_debug=True)
+    log_simulation_dir = "log/test/simulation"
+    # simulation(c, root_out_dir=log_simulation_dir, mode="valid", is_debug=True)
+    # evaluation(c, root_out_dir="log/test/evaluation", mode="valid", is_debug=True)
+    create_preprint_figure(c, root_out_dir=log_simulation_dir)
+    create_fullpaper_figure(c, root_out_dir=log_simulation_dir)
 
 
 @invoke.task
@@ -59,7 +62,7 @@ def simulation(
     ]:
         cmd = " ".join(
             [
-                "python src/simulation.py",
+                "uv run src/simulation.py",
                 f"--data_path={data_path}" if data_path is not None else "",
                 f"--out_dir={out_dir}",
                 f"--methods {methods}",
@@ -70,6 +73,7 @@ def simulation(
                 f"| tee -a {root_dir / 'a.log'}",
             ]
         )
+        print(cmd)
         subprocess.run(cmd, shell=True)
 
 
@@ -78,12 +82,11 @@ def evaluation(
     c: invoke.context.Context,
     root_out_dir: str,
     mode: str,
-    psi_strategy: str,
-    iter_max: int,
+    psi_strategy: str = "bernoulli",
     is_debug: bool = False,
 ) -> None:
     methods = " ".join(ALL_METHODS)
-    iter_max = 3 if is_debug else iter_max
+    iter_max = 3 if is_debug else 50
     max_eval_user = 3 if is_debug else 100
     eps = 0.5
     root_dir = pathlib.Path(root_out_dir)
@@ -94,7 +97,7 @@ def evaluation(
     ]:
         cmd = " ".join(
             [
-                "python src/evaluation.py",
+                "uv run src/evaluation.py",
                 f"--data_path={data_path}" if data_path is not None else "",
                 f"--out_dir={out_dir}",
                 f"--methods {methods}",
@@ -106,6 +109,7 @@ def evaluation(
                 f"| tee -a {root_dir / 'a.log'}",
             ]
         )
+        print(cmd)
         subprocess.run(cmd, shell=True)
 
 
@@ -148,5 +152,54 @@ def create_preprint_figure(c: invoke.context.Context, root_out_dir: str) -> None
 
 
 @invoke.task
-def create_fullpaper_figure(c: invoke.context.Context) -> None:
+def create_fullpaper_figure(c: invoke.context.Context, root_out_dir: str) -> None:
+    lan_map = LANGUANGE_MAP_JP
+    root_out_dir = pathlib.Path(root_out_dir)
     _, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 6))
+    metrics = list(
+        map(
+            lambda s: translate(s, lan_map=lan_map),
+            [
+                "test-recall",
+                "entropy",
+                "accuracy",
+                "diversity:topic:category",
+                "novelty:ip",
+                "serendipity:topic:category",
+            ],
+        )
+    )
+
+    data_names = ["artificial", "dunnhumby", "tafeng"]
+    fig, axes = plt.subplots(nrows=6, ncols=3, figsize=(16, 20))
+    df = {
+        data_name: read_df(
+            root_out_dir / f"{data_name}/log.csv",
+            methods=PREPRINT_METHODS,
+            lan_map=lan_map,
+        )
+        for data_name in data_names
+    }
+    for j, data_name in enumerate(data_names):
+        axes[0, j].set_title(translate(s=data_name, lan_map=lan_map))
+        for i, metric in enumerate(metrics):
+            legend = (i, j) == (len(metrics) - 1, 1)  # 右上だけ凡例を表示する
+            if i == 3:
+                y_min = [0.9, 0.99, 0.98]
+                axes[i, j].set_ylim(y_min[j], 1.0)
+            sns.lineplot(
+                x=lan_map["round"],
+                y=metric,
+                hue=lan_map["method"],
+                style=lan_map["method"],
+                data=df[data_name],
+                ax=axes[i, j],
+                legend=legend,
+            )
+
+    axes[len(metrics) - 1, 1].legend(
+        loc="upper center", ncol=5, bbox_to_anchor=(0.5, -0.2), fontsize=16
+    )
+
+    plt.tight_layout()
+    plt.savefig(root_out_dir / "simulation-fullpaper.png")
