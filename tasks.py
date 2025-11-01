@@ -1,29 +1,19 @@
 import pathlib
 import subprocess
-from typing import Optional
 
 import invoke
 import japanize_matplotlib  # noqa: F401
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 
-from lib.const import ALL_METHODS, LANGUANGE_MAP_JP, PREPRINT_METHODS, translate
-
-
-def read_df(
-    data_path: pathlib.Path,
-    methods: Optional[list[str]] = None,
-    lan_map: Optional[dict[str, str]] = None,
-) -> pd.DataFrame:
-    df = pd.read_csv(data_path)
-    if methods is not None:
-        df = df[df.method.isin(set(methods))]
-    if lan_map is not None:
-        df.method = df.method.apply(lambda s: translate(s, lan_map=lan_map))
-        df.columns = list(map(lambda s: translate(s, lan_map=lan_map), df.columns))
-
-    return df
+from lib.const import (
+    ALL_METHODS,
+    LANGUANGE_MAP_EN,
+    LANGUANGE_MAP_JP,
+    PREPRINT_METHODS,
+    translate,
+)
+from lib.util import read_df
 
 
 @invoke.task
@@ -56,8 +46,8 @@ def simulation(
     root_dir = pathlib.Path(root_out_dir)
     root_dir.mkdir(parents=True, exist_ok=True)
     for data_path, out_dir in [
-        ("data/preprocessed/dunnhumby/data.json", root_dir / "dunnhumby"),
-        ("data/preprocessed/tafeng/data.json", root_dir / "tafeng"),
+        # ("data/preprocessed/dunnhumby/data.json", root_dir / "dunnhumby"),
+        # ("data/preprocessed/tafeng/data.json", root_dir / "tafeng"),
         (None, root_dir / "artificial"),
     ]:
         cmd = " ".join(
@@ -115,7 +105,7 @@ def evaluation(
 
 @invoke.task
 def create_preprint_figure(c: invoke.context.Context, root_out_dir: str) -> None:
-    lan_map = LANGUANGE_MAP_JP
+    lan_map = LANGUANGE_MAP_EN
     _, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 6))
     metrics = list(
         map(lambda s: translate(s, lan_map=lan_map), ["entropy", "test-recall"])

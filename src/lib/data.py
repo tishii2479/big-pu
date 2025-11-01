@@ -6,21 +6,22 @@ from lib.util import Dataset
 def generate_artificial_psi(
     num_item: int = 5000,
     num_topic: int = 50,
-    num_u_topic: int = 10,
+    num_upper_topic: int = 10,
     num_k: int = 20,
     num_topic_per_k: int = 10,
+    alpha: float = 10.0,
     random_state: int = 0,
 ) -> np.ndarray:
-    assert num_topic % num_u_topic == 0
+    assert num_topic % num_upper_topic == 0
     rnd = np.random.RandomState(random_state)
     s_i = num_item // num_topic
     psi = []
     for _ in range(num_k):
-        u_topic = rnd.randint(num_u_topic)
+        u_topic = rnd.randint(num_upper_topic)
         p = np.array(
-            [1.0] * u_topic + [10.0] + [1.0] * (num_u_topic - u_topic - 1)
+            [1.0] * u_topic + [alpha] + [1.0] * (num_upper_topic - u_topic - 1)
         ).repeat(
-            num_topic // num_u_topic
+            num_topic // num_upper_topic
         )  # 上位トピックu_topicに所属するトピックの確率を高くする
         p /= p.sum()
         topics = rnd.choice(range(num_topic), p=p, size=num_topic_per_k, replace=False)
@@ -39,6 +40,7 @@ def generate_artificial_dataset(
     num_k: int = 20,
     num_topic_per_k: int = 10,
     num_sample_item: int = 500,
+    alpha: float = 10.0,
     random_state: int = 0,
 ) -> Dataset:
     s_u = num_user // num_k
@@ -46,10 +48,12 @@ def generate_artificial_dataset(
 
     psi = generate_artificial_psi(
         num_item=num_item,
-        num_u_topic=num_u_topic,
+        num_upper_topic=num_u_topic,
         num_topic=num_topic,
         num_k=num_k,
         num_topic_per_k=num_topic_per_k,
+        alpha=alpha,
+        random_state=random_state,
     )
 
     train_p_u: dict[int, list[int]] = {u: [] for u in range(num_user)}

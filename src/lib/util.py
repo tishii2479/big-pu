@@ -1,4 +1,5 @@
 import json
+import pathlib
 from typing import Optional
 
 import numpy as np
@@ -6,6 +7,23 @@ import pandas as pd
 import tqdm
 from sklearn.cluster import KMeans
 from sklearn.decomposition import NMF
+
+from lib.const import translate
+
+
+def read_df(
+    data_path: pathlib.Path,
+    methods: Optional[list[str]] = None,
+    lan_map: Optional[dict[str, str]] = None,
+) -> pd.DataFrame:
+    df = pd.read_csv(data_path)
+    if methods is not None:
+        df = df[df.method.isin(set(methods))]
+    if lan_map is not None:
+        df.method = df.method.apply(lambda s: translate(s, lan_map=lan_map))
+        df.columns = list(map(lambda s: translate(s, lan_map=lan_map), df.columns))
+
+    return df
 
 
 class Dataset:
